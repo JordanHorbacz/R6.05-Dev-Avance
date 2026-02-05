@@ -30,7 +30,9 @@ public class AnnonceDAO extends DAO<Annonce> {
     public List<Annonce> findAll() {
         List<Annonce> list = new ArrayList<>();
         try {
-            ResultSet rs = connect.createStatement().executeQuery("SELECT * FROM annonce");
+            String sql = "SELECT * FROM annonce";
+            Statement stmt = connect.createStatement();
+            ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
                 Annonce a = new Annonce();
                 a.setId(rs.getInt("id"));
@@ -41,9 +43,12 @@ public class AnnonceDAO extends DAO<Annonce> {
                 a.setDate(rs.getTimestamp("date"));
                 list.add(a);
             }
+            rs.close();
+            stmt.close();
         } catch (SQLException e) { e.printStackTrace(); }
         return list;
     }
+
 
     @Override
     public Annonce find(int id) {
