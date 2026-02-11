@@ -1,60 +1,56 @@
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@ page contentType="text/html; charset=UTF-8" pageEncoding="UTF-8" %>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <title>Ajouter une Annonce</title>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
+    <meta charset="UTF-8">
+    <title>Post Annonce - MasterAnnonce</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <nav>
+        <a href="AnnonceList" class="logo">MasterAnnonce</a>
+        <div><a href="AnnonceList">Back to List</a></div>
+    </nav>
 
-<nav class="navbar">
     <div class="container">
-        <a href="AnnonceList" class="navbar-brand">Petites Annonces</a>
-        <div class="nav-links">
-            <a href="AnnonceList">Voir les annonces</a>
-            <a href="AnnonceAdd">Ajouter une annonce</a>
-        </div>
-    </div>
-</nav>
+        <form action="AnnonceAdd" method="post">
+            <h1>Create New Ad</h1>
+            
+            <c:if test="${not empty errors}">
+                <div style="background-color: #fee2e2; border: 1px solid #ef4444; color: #b91c1c; padding: 1rem; border-radius: 0.5rem;">
+                    <strong>Please fix the following errors:</strong>
+                    <ul style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                        <c:forEach var="error" items="${errors}">
+                            <li>${error.message} (Field: ${error.propertyPath})</li>
+                        </c:forEach>
+                    </ul>
+                </div>
+            </c:if>
 
-<div class="container">
-    <div class="card">
-        <h2>Création d'une annonce</h2>
-        <p class="mb-2">Remplissez le formulaire ci-dessous pour publier une nouvelle annonce.</p>
+            <label for="title">Title *</label>
+            <input type="text" id="title" name="title" value="${annonce.title}" required>
 
-        <c:if test="${param.status == 'success'}">
-            <div style="background-color: #d4edda; color: #155724; padding: 10px; border-radius: 5px; margin-bottom: 20px; border: 1px solid #c3e6cb;">
-                Annonce ajoutée avec succès !
-            </div>
-        </c:if>
+            <label for="categoryId">Category *</label>
+            <select name="categoryId" id="categoryId" required>
+                <option value="">Select Category</option>
+                <c:forEach var="cat" items="${categories}">
+                    <option value="${cat.id}" ${annonce.category != null && annonce.category.id == cat.id ? 'selected' : ''}>${cat.label}</option>
+                </c:forEach>
+            </select>
 
-        <form action="AnnonceAdd" method="POST">
-            <div class="form-group">
-                <label for="title">Titre :</label>
-                <input type="text" id="title" name="title" placeholder="Titre de l'annonce" required>
-            </div>
+            <label for="description">Description *</label>
+            <textarea id="description" name="description" rows="5" required>${annonce.description}</textarea>
 
-            <div class="form-group">
-                <label for="description">Description :</label>
-                <textarea id="description" name="description" placeholder="Description détaillée" required></textarea>
-            </div>
+            <label for="adress">Address</label>
+            <input type="text" id="adress" name="adress" value="${annonce.adress}">
 
-            <div class="form-group">
-                <label for="adress">Adresse :</label>
-                <input type="text" id="adress" name="adress" placeholder="Ville ou adresse" required>
-            </div>
+            <label for="mail">Contact Email</label>
+            <input type="email" id="mail" name="mail" value="${annonce.mail}">
 
-            <div class="form-group">
-                <label for="mail">Email :</label>
-                <input type="email" id="mail" name="mail" placeholder="votre@email.com" required>
-            </div>
-
-            <div class="text-center">
-                <input type="submit" value="Enregistrer l'annonce" class="btn btn-primary">
-            </div>
+            <button type="submit" class="btn">Publish Annonce</button>
         </form>
     </div>
-</div>
-
 </body>
 </html>

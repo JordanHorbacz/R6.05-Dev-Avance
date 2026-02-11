@@ -10,19 +10,24 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-@WebServlet("/AnnonceDelete")
-public class AnnonceDelete extends HttpServlet {
+@WebServlet("/AnnonceDetail")
+public class AnnonceDetail extends HttpServlet {
     private final AnnoncesService service = new AnnoncesService();
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         try {
             long id = Long.parseLong(request.getParameter("id"));
-            service.deleteAnnonce(id);
+            Annonce a = service.getAnnonce(id);
+            if (a == null) {
+                response.sendRedirect("AnnonceList");
+                return;
+            }
+            request.setAttribute("annonce", a);
+            request.getRequestDispatcher("/AnnonceDetail.jsp").forward(request, response);
         } catch (Exception e) {
-            e.printStackTrace();
+            response.sendRedirect("AnnonceList");
         }
-        response.sendRedirect("AnnonceList");
     }
 }

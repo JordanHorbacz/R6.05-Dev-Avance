@@ -1,5 +1,8 @@
 package org.univ_paris8.iut.montreuil.dev_avance;
 
+import org.univ_paris8.iut.montreuil.dev_avance.entity.Annonce;
+import org.univ_paris8.iut.montreuil.dev_avance.service.AnnoncesService;
+
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -10,15 +13,32 @@ import java.util.List;
 
 @WebServlet(name = "AnnonceList", value = "/AnnonceList")
 public class AnnonceList extends HttpServlet {
+    private final AnnoncesService service = new AnnoncesService();
 
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
+            throws ServletException, IOException {
+        String pageParam = request.getParameter("page");
+        int page = 1;
         try {
-            AnnonceDAO dao = new AnnonceDAO();
-            List<Annonce> listeAnnonces = dao.findAll();
-            request.setAttribute("annonces", listeAnnonces);
-            this.getServletContext().getRequestDispatcher("/AnnonceList.jsp").forward(request, response);
-        } catch (ClassNotFoundException e) {
-            e.printStackTrace();
+            if (pageParam != null) {
+                page = Integer.parseInt(pageParam);
+            }
+        } catch (NumberFormatException e) {
+            page = 1;
         }
+
+        String keyword = request.getParameter("search");
+        List<Annonce> list;
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            list = service.searchAnnonces(keyword, page, 10);
+            request.setAttribute("search", keyword);
+        } else {
+            list = service.getAnnonces(page, 10);
+        }
+
+        request.setAttribute("annonces", list);
+        request.setAttribute("currentPage", page);
+        request.getRequestDispatcher("/AnnonceList.jsp").forward(request, response);
     }
 }
