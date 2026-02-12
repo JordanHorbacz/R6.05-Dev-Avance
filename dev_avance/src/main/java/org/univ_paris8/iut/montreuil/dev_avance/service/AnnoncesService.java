@@ -2,6 +2,8 @@ package org.univ_paris8.iut.montreuil.dev_avance.service;
 
 import org.univ_paris8.iut.montreuil.dev_avance.entity.Annonce;
 import org.univ_paris8.iut.montreuil.dev_avance.entity.Annonce.Status;
+import org.univ_paris8.iut.montreuil.dev_avance.entity.Category;
+import org.univ_paris8.iut.montreuil.dev_avance.entity.User;
 import org.univ_paris8.iut.montreuil.dev_avance.repository.AnnonceRepository;
 import org.univ_paris8.iut.montreuil.dev_avance.util.EntityManagerUtil;
 
@@ -17,43 +19,52 @@ public class AnnoncesService {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            AnnonceRepository repo = new AnnonceRepository(em);
 
             if (categoryId != null) {
-                org.univ_paris8.iut.montreuil.dev_avance.entity.Category cat = em
-                        .getReference(org.univ_paris8.iut.montreuil.dev_avance.entity.Category.class, categoryId);
-                annonce.setCategory(cat);
+                annonce.setCategory(em.find(Category.class, categoryId));
             }
             if (userId != null) {
-                org.univ_paris8.iut.montreuil.dev_avance.entity.User user = em
-                        .getReference(org.univ_paris8.iut.montreuil.dev_avance.entity.User.class, userId);
-                annonce.setAuthor(user);
+                annonce.setAuthor(em.find(User.class, userId));
             }
 
             annonce.setDate(new Timestamp(System.currentTimeMillis()));
             annonce.setStatus(Status.DRAFT);
-            repo.save(annonce);
+
+            em.persist(annonce);
             tx.commit();
         } catch (Exception e) {
-            if (tx.isActive())
-                tx.rollback();
+            if (tx.isActive()) tx.rollback();
             throw e;
         } finally {
             em.close();
         }
     }
 
+    public Annonce getAnnonce(Long id) {
+        EntityManager em = EntityManagerUtil.getEntityManager();
+        try {
+            AnnonceRepository repo = new AnnonceRepository(em);
+            Annonce annonce = repo.findById(id);
+            if (annonce != null) {
+                if (annonce.getCategory() != null) annonce.getCategory().getLabel();
+                if (annonce.getAuthor() != null) annonce.getAuthor().getUsername();
+            }
+            return annonce;
+        } finally {
+            em.close();
+        }
+    }
+
+
     public void updateAnnonce(Annonce annonce) {
         EntityManager em = EntityManagerUtil.getEntityManager();
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            AnnonceRepository repo = new AnnonceRepository(em);
-            repo.update(annonce);
+            em.merge(annonce);
             tx.commit();
         } catch (Exception e) {
-            if (tx.isActive())
-                tx.rollback();
+            if (tx.isActive()) tx.rollback();
             throw e;
         } finally {
             em.close();
@@ -73,16 +84,13 @@ public class AnnoncesService {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            AnnonceRepository repo = new AnnonceRepository(em);
-            Annonce annonce = repo.findById(id);
+            Annonce annonce = em.find(Annonce.class, id);
             if (annonce != null) {
                 annonce.setStatus(status);
-
             }
             tx.commit();
         } catch (Exception e) {
-            if (tx.isActive())
-                tx.rollback();
+            if (tx.isActive()) tx.rollback();
             throw e;
         } finally {
             em.close();
@@ -94,26 +102,14 @@ public class AnnoncesService {
         EntityTransaction tx = em.getTransaction();
         try {
             tx.begin();
-            AnnonceRepository repo = new AnnonceRepository(em);
-            Annonce annonce = repo.findById(id);
+            Annonce annonce = em.find(Annonce.class, id);
             if (annonce != null) {
-                repo.delete(annonce);
+                em.remove(annonce);
             }
             tx.commit();
         } catch (Exception e) {
-            if (tx.isActive())
-                tx.rollback();
+            if (tx.isActive()) tx.rollback();
             throw e;
-        } finally {
-            em.close();
-        }
-    }
-
-    public Annonce getAnnonce(Long id) {
-        EntityManager em = EntityManagerUtil.getEntityManager();
-        try {
-            AnnonceRepository repo = new AnnonceRepository(em);
-            return repo.findById(id);
         } finally {
             em.close();
         }
@@ -122,8 +118,7 @@ public class AnnoncesService {
     public List<Annonce> getAnnonces(int page, int pageSize) {
         EntityManager em = EntityManagerUtil.getEntityManager();
         try {
-            AnnonceRepository repo = new AnnonceRepository(em);
-            return repo.findAll(page, pageSize);
+            return new AnnonceRepository(em).findAll(page, pageSize);
         } finally {
             em.close();
         }
@@ -132,17 +127,16 @@ public class AnnoncesService {
     public List<Annonce> searchAnnonces(String keyword, int page, int pageSize) {
         EntityManager em = EntityManagerUtil.getEntityManager();
         try {
-            AnnonceRepository repo = new AnnonceRepository(em);
-            return repo.findByKeyword(keyword, page, pageSize);
+            return new AnnonceRepository(em).findByKeyword(keyword, page, pageSize);
         } finally {
             em.close();
         }
     }
 
-    public List<org.univ_paris8.iut.montreuil.dev_avance.entity.Category> getAllCategories() {
+    public List<Category> getAllCategories() {
         EntityManager em = EntityManagerUtil.getEntityManager();
         try {
-            return new org.univ_paris8.iut.montreuil.dev_avance.repository.CategoryRepository(em).findAll();
+            return em.createQuery("SELECT c FROM Category c", Category.class).getResultList();
         } finally {
             em.close();
         }
