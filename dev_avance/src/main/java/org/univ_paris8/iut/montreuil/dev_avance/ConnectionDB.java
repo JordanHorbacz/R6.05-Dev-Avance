@@ -8,7 +8,7 @@ public class ConnectionDB {
 
     private String url = "jdbc:postgresql://database-etudiants:5432/jhorbacz";
     private String user = "jhorbacz";
-    private String passwd = "vraiemdp";
+    private String passwd = "0";
 
     private static Connection connect;
 

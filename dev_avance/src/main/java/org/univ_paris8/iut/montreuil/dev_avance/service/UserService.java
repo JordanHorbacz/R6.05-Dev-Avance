@@ -41,4 +41,27 @@ public class UserService {
             em.close();
         }
     }
+
+    public void initTestUser() {
+        EntityManager em = EntityManagerUtil.getEntityManager();
+        try {
+            UserRepository repo = new UserRepository(em);
+            if (!repo.findByEmail("test@test.com").isPresent()) {
+                em.getTransaction().begin();
+
+                User testUser = new User("TestUser", "test@test.com", "test1234");
+                repo.save(testUser);
+
+                em.getTransaction().commit();
+                System.out.println(">>> Utilisateur de test (test@test.com / test) créé avec succès !");
+            }
+        } catch (Exception e) {
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            e.printStackTrace();
+        } finally {
+            em.close();
+        }
+    }
 }

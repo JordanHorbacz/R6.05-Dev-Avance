@@ -24,7 +24,7 @@
             <input type="password" id="password" name="password" required placeholder="••••••••">
 
             <button type="submit" class="btn" style="width: 100%;">Sign In</button>
-            
+
             <p style="text-align: center; font-size: 0.875rem; color: var(--text-muted);">
                 Don't have an account? <a href="#" style="color: var(--primary);">Register</a>
             </p>
