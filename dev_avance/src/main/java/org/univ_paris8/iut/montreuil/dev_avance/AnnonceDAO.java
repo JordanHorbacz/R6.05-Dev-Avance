@@ -1,97 +1,92 @@
 package org.univ_paris8.iut.montreuil.dev_avance;
 
-import java.sql.*;
-import java.util.ArrayList;
+import org.univ_paris8.iut.montreuil.dev_avance.entity.Annonce;
+import org.univ_paris8.iut.montreuil.dev_avance.util.EntityManagerUtil;
+
+import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import java.util.List;
 
 public class AnnonceDAO extends DAO<Annonce> {
-    private Connection connect;
 
-    public AnnonceDAO() throws ClassNotFoundException {
-        this.connect = ConnectionDB.getInstance();
+    public AnnonceDAO() {
     }
 
     @Override
     public boolean create(Annonce obj) {
+        EntityManager em = EntityManagerUtil.getEntityManager();
+        EntityTransaction tx = em.getTransaction();
         try {
-            String sql = "INSERT INTO annonce (title, description, adress, mail, date) VALUES (?, ?, ?, ?, ?)";
-            PreparedStatement ps = connect.prepareStatement(sql);
-            ps.setString(1, obj.getTitle());
-            ps.setString(2, obj.getDescription());
-            ps.setString(3, obj.getAdress());
-            ps.setString(4, obj.getMail());
-            ps.setTimestamp(5, new Timestamp(System.currentTimeMillis()));
-            ps.executeUpdate();
+            tx.begin();
+            em.persist(obj);
+            tx.commit();
             return true;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            em.close();
+        }
     }
 
     @Override
     public List<Annonce> findAll() {
-        List<Annonce> list = new ArrayList<>();
+        EntityManager em = EntityManagerUtil.getEntityManager();
         try {
-            String sql = "SELECT * FROM annonce";
-            Statement stmt = connect.createStatement();
-            ResultSet rs = stmt.executeQuery(sql);
-            while (rs.next()) {
-                Annonce a = new Annonce();
-                a.setId(rs.getInt("id"));
-                a.setTitle(rs.getString("title"));
-                a.setDescription(rs.getString("description"));
-                a.setAdress(rs.getString("adress"));
-                a.setMail(rs.getString("mail"));
-                a.setDate(rs.getTimestamp("date"));
-                list.add(a);
-            }
-            rs.close();
-            stmt.close();
-        } catch (SQLException e) { e.printStackTrace(); }
-        return list;
+            return em.createQuery("SELECT a FROM Annonce a", Annonce.class).getResultList();
+        } finally {
+            em.close();
+        }
     }
-
 
     @Override
     public Annonce find(int id) {
-        Annonce a = null;
+        EntityManager em = EntityManagerUtil.getEntityManager();
         try {
-            String sql = "SELECT * FROM annonce WHERE id = ?";
-            PreparedStatement ps = connect.prepareStatement(sql);
-            ps.setInt(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) {
-                a = new Annonce();
-                a.setId(rs.getInt("id"));
-                a.setTitle(rs.getString("title"));
-                a.setDescription(rs.getString("description"));
-                a.setAdress(rs.getString("adress"));
-                a.setMail(rs.getString("mail"));
-                a.setDate(rs.getTimestamp("date"));
-            }
-        } catch (SQLException e) { e.printStackTrace(); }
-        return a;
+            return em.find(Annonce.class, (long) id);
+        } finally {
+            em.close();
+        }
     }
 
     @Override
     public boolean update(Annonce obj) {
+        EntityManager em = EntityManagerUtil.getEntityManager();
+        EntityTransaction tx = em.getTransaction();
         try {
-            String sql = "UPDATE annonce SET title=?, description=?, adress=?, mail=? WHERE id=?";
-            PreparedStatement ps = connect.prepareStatement(sql);
-            ps.setString(1, obj.getTitle());
-            ps.setString(2, obj.getDescription());
-            ps.setString(3, obj.getAdress());
-            ps.setString(4, obj.getMail());
-            ps.setInt(5, obj.getId());
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+            tx.begin();
+            em.merge(obj);
+            tx.commit();
+            return true;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            em.close();
+        }
     }
 
     @Override
     public boolean delete(int id) {
+        EntityManager em = EntityManagerUtil.getEntityManager();
+        EntityTransaction tx = em.getTransaction();
         try {
-            String sql = "DELETE FROM annonce WHERE id = ?";
-            PreparedStatement ps = connect.prepareStatement(sql);
-            ps.setInt(1, id);
-            return ps.executeUpdate() > 0;
-        } catch (SQLException e) { e.printStackTrace(); return false; }
+            tx.begin();
+            Annonce a = em.find(Annonce.class, (long) id);
+            if (a != null) {
+                em.remove(a);
+                tx.commit();
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            e.printStackTrace();
+            return false;
+        } finally {
+            em.close();
+        }
     }
 }

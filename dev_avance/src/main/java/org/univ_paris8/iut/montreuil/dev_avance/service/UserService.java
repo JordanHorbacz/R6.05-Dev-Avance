@@ -64,4 +64,14 @@ public class UserService {
             em.close();
         }
     }
+    // Ajoute cette méthode dans ta classe UserService existante
+    public void createUser(String username, String email, String password) {
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        user.setPassword(password); // Note: Dans un vrai projet, pense à chiffrer le mot de passe !
+        user.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
+
+        UserRepository.save(user);
+    }
 }

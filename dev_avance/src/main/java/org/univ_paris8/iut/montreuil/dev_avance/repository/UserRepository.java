@@ -1,8 +1,10 @@
 package org.univ_paris8.iut.montreuil.dev_avance.repository;
 
 import org.univ_paris8.iut.montreuil.dev_avance.entity.User;
+import org.univ_paris8.iut.montreuil.dev_avance.util.EntityManagerUtil;
 
 import javax.persistence.EntityManager;
+import javax.persistence.EntityTransaction;
 import javax.persistence.TypedQuery;
 import java.util.List;
 import java.util.Optional;
@@ -15,8 +17,19 @@ public class UserRepository {
         this.em = em;
     }
 
-    public void save(User user) {
-        em.persist(user);
+    public static void save(User user) {
+        EntityManager em = EntityManagerUtil.getEntityManager();
+        EntityTransaction tx = em.getTransaction();
+        try {
+            tx.begin();
+            em.persist(user);
+            tx.commit();
+        } catch (Exception e) {
+            if (tx.isActive()) tx.rollback();
+            throw e;
+        } finally {
+            em.close();
+        }
     }
 
     public User findById(Long id) {
