@@ -26,6 +26,23 @@ public class UserService {
         }
     }
 
+    public User loginByUsername(String username, String password) {
+        EntityManager em = EntityManagerUtil.getEntityManager();
+        try {
+            UserRepository repo = new UserRepository(em);
+            Optional<User> userOpt = repo.findByUsername(username);
+            if (userOpt.isPresent()) {
+                User user = userOpt.get();
+                if (user.getPassword().equals(password)) {
+                    return user;
+                }
+            }
+            return null;
+        } finally {
+            em.close();
+        }
+    }
+
     public void register(User user) {
         EntityManager em = EntityManagerUtil.getEntityManager();
         try {
@@ -64,12 +81,12 @@ public class UserService {
             em.close();
         }
     }
-    // Ajoute cette méthode dans ta classe UserService existante
+
     public void createUser(String username, String email, String password) {
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
-        user.setPassword(password); // Note: Dans un vrai projet, pense à chiffrer le mot de passe !
+        user.setPassword(password);
         user.setCreatedAt(new java.sql.Timestamp(System.currentTimeMillis()));
 
         UserRepository.save(user);

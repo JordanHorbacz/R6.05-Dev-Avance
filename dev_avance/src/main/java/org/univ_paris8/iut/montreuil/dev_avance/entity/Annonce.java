@@ -38,6 +38,9 @@ public class Annonce {
     @Enumerated(EnumType.STRING)
     private Status status;
 
+    @Version
+    private int version;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id")
     private User author;
