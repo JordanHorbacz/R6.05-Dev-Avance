@@ -1,6 +1,6 @@
 package org.univ_paris8.iut.montreuil.dev_avance.dto;
 
-import javax.validation.constraints.NotNull;
+import jakarta.validation.constraints.NotNull;
 
 public class Credentials {
     @NotNull

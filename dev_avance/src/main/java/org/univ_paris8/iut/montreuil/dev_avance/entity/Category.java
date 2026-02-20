@@ -1,7 +1,7 @@
 package org.univ_paris8.iut.montreuil.dev_avance.entity;
 
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import java.util.ArrayList;
 import java.util.List;
 

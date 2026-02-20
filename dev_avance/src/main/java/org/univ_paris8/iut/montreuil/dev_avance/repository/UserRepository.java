@@ -1,62 +1,18 @@
 package org.univ_paris8.iut.montreuil.dev_avance.repository;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Repository;
 import org.univ_paris8.iut.montreuil.dev_avance.entity.User;
-import org.univ_paris8.iut.montreuil.dev_avance.util.EntityManagerUtil;
 
-import javax.persistence.EntityManager;
-import javax.persistence.EntityTransaction;
-import javax.persistence.TypedQuery;
-import java.util.List;
 import java.util.Optional;
 
-public class UserRepository {
+@Repository
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByUsername(String username);
 
-    private final EntityManager em;
+    Boolean existsByUsername(String username);
 
-    public UserRepository(EntityManager em) {
-        this.em = em;
-    }
+    Boolean existsByEmail(String email);
 
-    public static void save(User user) {
-        EntityManager em = EntityManagerUtil.getEntityManager();
-        EntityTransaction tx = em.getTransaction();
-        try {
-            tx.begin();
-            em.persist(user);
-            tx.commit();
-        } catch (Exception e) {
-            if (tx.isActive()) tx.rollback();
-            throw e;
-        } finally {
-            em.close();
-        }
-    }
-
-    public User findById(Long id) {
-        return em.find(User.class, id);
-    }
-
-    public Optional<User> findByUsername(String username) {
-        try {
-            TypedQuery<User> query = em.createQuery("SELECT u FROM User u WHERE u.username = :username", User.class);
-            query.setParameter("username", username);
-            return Optional.of(query.getSingleResult());
-        } catch (Exception e) {
-            return Optional.empty();
-        }
-    }
-
-    public Optional<User> findByEmail(String email) {
-        try {
-            TypedQuery<User> query = em.createQuery("SELECT u FROM User u WHERE u.email = :email", User.class);
-            query.setParameter("email", email);
-            return Optional.of(query.getSingleResult());
-        } catch (Exception e) {
-            return Optional.empty();
-        }
-    }
-
-    public void delete(User user) {
-        em.remove(user);
-    }
+    Optional<User> findByEmail(String email);
 }

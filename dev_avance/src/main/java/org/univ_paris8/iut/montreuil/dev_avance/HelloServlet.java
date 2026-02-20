@@ -17,15 +17,13 @@ public class HelloServlet extends HttpServlet {
         response.setCharacterEncoding("UTF-8");
         PrintWriter out = response.getWriter();
 
-
         String nomSaisi = request.getParameter("nom");
 
         out.println("<html><body>");
 
-
         if (nomSaisi != null && !nomSaisi.trim().isEmpty()) {
             out.println("<h1>" + message + " " + nomSaisi + " !</h1>");
-            out.println("<hr>"); // Une ligne de séparation
+            out.println("<hr>");
         } else {
             out.println("<h1>" + message + "</h1>");
         }
@@ -35,7 +33,6 @@ public class HelloServlet extends HttpServlet {
         out.println("  <input type='text' name='nom' placeholder='Votre nom ici...' required>");
         out.println("  <input type='submit' value='Envoyer'>");
         out.println("</form>");
-
 
         out.println("</body></html>");
     }
