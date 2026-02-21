@@ -1,12 +1,12 @@
 package org.univ_paris8.iut.montreuil.dev_avance.test;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
@@ -22,42 +22,40 @@ import org.univ_paris8.iut.montreuil.dev_avance.repository.CategoryRepository;
 import org.univ_paris8.iut.montreuil.dev_avance.repository.UserRepository;
 
 import java.sql.Timestamp;
+import java.util.Set;
 
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @SpringBootTest
 @AutoConfigureMockMvc
 @Testcontainers
-public class AnnonceIntegrationTest {
+class AnnonceIntegrationTest {
 
     @Container
-    public static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>("postgres:15-alpine")
+    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:15-alpine")
             .withDatabaseName("integration-tests-db")
             .withUsername("sa")
             .withPassword("sa");
 
     @DynamicPropertySource
-    static void postgreSQLProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgreSQLContainer::getJdbcUrl);
-        registry.add("spring.datasource.username", postgreSQLContainer::getUsername);
-        registry.add("spring.datasource.password", postgreSQLContainer::getPassword);
+    static void postgresProperties(DynamicPropertyRegistry registry) {
+        registry.add("spring.datasource.url", postgres::getJdbcUrl);
+        registry.add("spring.datasource.username", postgres::getUsername);
+        registry.add("spring.datasource.password", postgres::getPassword);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "create-drop");
     }
 
     @Autowired
     private MockMvc mockMvc;
-
     @Autowired
     private UserRepository userRepository;
-
     @Autowired
     private CategoryRepository categoryRepository;
-
     @Autowired
     private AnnonceRepository annonceRepository;
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     private User testUser;
     private Category testCategory;
@@ -68,58 +66,69 @@ public class AnnonceIntegrationTest {
         userRepository.deleteAll();
         categoryRepository.deleteAll();
 
-        // Create user
         testUser = new User();
         testUser.setUsername("integrationUser");
         testUser.setEmail("integration@test.com");
-        testUser.setPassword("password"); // In real test, this should be encoded potentially if using real auth flow
+        testUser.setPassword(passwordEncoder.encode("password123"));
+        testUser.setRoles(Set.of("ROLE_USER"));
         userRepository.save(testUser);
 
-        // Create category
         testCategory = new Category();
         testCategory.setLabel("Integration Category");
         categoryRepository.save(testCategory);
     }
 
     @Test
-    @WithMockUser(username = "integrationUser", roles = { "USER" })
-    void shouldCreateAnnonce() throws Exception {
-        String annonceJson = """
-                {
-                    "title": "Integration Test Annonce",
-                    "description": "Running inside Testcontainers!",
-                    "adress": "Docker Container",
-                    "mail": "test@docker.com",
-                    "categoryId": %d,
-                    "authorId": %d
-                }
-                """.formatted(testCategory.getId(), testUser.getId());
+    void loginAvecBonIdentifiants_retourne200AvecToken() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                        { "username": "integrationUser", "password": "password123" }
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").isNotEmpty())
+                .andExpect(jsonPath("$.username").value("integrationUser"));
+    }
 
+    @Test
+    void accesProtegeSansToken_retourne401() throws Exception {
+        mockMvc.perform(get("/api/annonces"))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = "integrationUser", roles = { "USER" })
+    void creerAnnonce_retourneAnnonceDraft() throws Exception {
         mockMvc.perform(post("/api/annonces")
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(annonceJson))
+                .content("""
+                        {
+                            "title": "Test annonce intégration",
+                            "description": "Lancé dans Testcontainers",
+                            "mail": "test@docker.com",
+                            "categoryId": %d,
+                            "authorId": %d
+                        }
+                        """.formatted(testCategory.getId(), testUser.getId())))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.title").value("Integration Test Annonce"))
+                .andExpect(jsonPath("$.title").value("Test annonce intégration"))
                 .andExpect(jsonPath("$.status").value("DRAFT"));
     }
 
     @Test
     @WithMockUser(username = "integrationUser", roles = { "USER" })
-    void shouldSearchAnnonce() throws Exception {
-        // Given
+    void rechercherAnnonces_retourneResultatPagine() throws Exception {
         Annonce annonce = new Annonce();
-        annonce.setTitle("Search me");
-        annonce.setDescription("Description for search test");
+        annonce.setTitle("Cherche moi");
+        annonce.setDescription("Description pour le test de recherche");
         annonce.setDate(new Timestamp(System.currentTimeMillis()));
         annonce.setStatus(Annonce.Status.PUBLISHED);
         annonce.setAuthor(testUser);
         annonce.setCategory(testCategory);
         annonceRepository.save(annonce);
 
-        // When/Then
-        mockMvc.perform(get("/api/annonces?q=Search")
-                .contentType(MediaType.APPLICATION_JSON))
+        mockMvc.perform(get("/api/annonces?q=Cherche"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.content[0].title").value("Search me"));
+                .andExpect(jsonPath("$.content[0].title").value("Cherche moi"));
     }
 }

@@ -1,127 +1,48 @@
 package org.univ_paris8.iut.montreuil.dev_avance.dto;
 
+import jakarta.validation.constraints.*;
 import java.sql.Timestamp;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
-import jakarta.validation.constraints.Email;
 
+/**
+ * DTO de réponse pour une annonce.
+ * Utilisé pour retourner les données d'une annonce au client (GET).
+ * Contient les informations de lecture seule (id, authorName, categoryLabel,
+ * etc.)
+ */
 public class AnnonceDTO {
+
     private Long id;
 
-    @NotNull(message = "Title is required")
-    @Size(min = 3, max = 64, message = "Title must be between 3 and 64 characters")
+    @NotBlank(message = "Le titre est obligatoire")
+    @Size(min = 3, max = 64, message = "Le titre doit contenir entre 3 et 64 caractères")
     private String title;
 
-    @Size(max = 256, message = "Description too long")
+    @Size(max = 256, message = "La description ne peut pas dépasser 256 caractères")
     private String description;
 
-    @Size(max = 64)
+    @Size(max = 64, message = "L'adresse ne peut pas dépasser 64 caractères")
     private String adress;
 
-    @Email
-    @Size(max = 64)
+    @Email(message = "L'adresse mail doit être valide")
+    @Size(max = 64, message = "L'adresse mail ne peut pas dépasser 64 caractères")
     private String mail;
 
     private Timestamp date;
+
     private String status;
+
     private String authorName;
+
     private String categoryLabel;
 
+    @NotNull(message = "L'identifiant de la catégorie est obligatoire")
+    @Positive(message = "L'identifiant de la catégorie doit être un nombre positif")
     private Long categoryId;
+
+    @Positive(message = "L'identifiant de l'auteur doit être un nombre positif")
     private Long authorId;
 
     public AnnonceDTO() {
-    }
-
-    private AnnonceDTO(Builder builder) {
-        this.id = builder.id;
-        this.title = builder.title;
-        this.description = builder.description;
-        this.adress = builder.adress;
-        this.mail = builder.mail;
-        this.date = builder.date;
-        this.status = builder.status;
-        this.authorName = builder.authorName;
-        this.categoryLabel = builder.categoryLabel;
-        this.categoryId = builder.categoryId;
-        this.authorId = builder.authorId;
-    }
-
-    public static class Builder {
-        private Long id;
-        private String title;
-        private String description;
-        private String adress;
-        private String mail;
-        private Timestamp date;
-        private String status;
-        private String authorName;
-        private String categoryLabel;
-        private Long categoryId;
-        private Long authorId;
-
-        public Builder id(Long id) {
-            this.id = id;
-            return this;
-        }
-
-        public Builder title(String title) {
-            this.title = title;
-            return this;
-        }
-
-        public Builder description(String description) {
-            this.description = description;
-            return this;
-        }
-
-        public Builder adress(String adress) {
-            this.adress = adress;
-            return this;
-        }
-
-        public Builder mail(String mail) {
-            this.mail = mail;
-            return this;
-        }
-
-        public Builder date(Timestamp date) {
-            this.date = date;
-            return this;
-        }
-
-        public Builder status(String status) {
-            this.status = status;
-            return this;
-        }
-
-        public Builder authorName(String authorName) {
-            this.authorName = authorName;
-            return this;
-        }
-
-        public Builder categoryLabel(String categoryLabel) {
-            this.categoryLabel = categoryLabel;
-            return this;
-        }
-
-        public Builder categoryId(Long categoryId) {
-            this.categoryId = categoryId;
-            return this;
-        }
-
-        public Builder authorId(Long authorId) {
-            this.authorId = authorId;
-            return this;
-        }
-
-        public AnnonceDTO build() {
-            return new AnnonceDTO(this);
-        }
-    }
-
-    public static Builder builder() {
-        return new Builder();
     }
 
     public Long getId() {

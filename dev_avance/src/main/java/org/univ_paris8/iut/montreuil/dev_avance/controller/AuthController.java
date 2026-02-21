@@ -10,20 +10,20 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.univ_paris8.iut.montreuil.dev_avance.dto.AuthResponseDTO;
 import org.univ_paris8.iut.montreuil.dev_avance.dto.Credentials;
 import org.univ_paris8.iut.montreuil.dev_avance.security.JwtUtils;
 import org.univ_paris8.iut.montreuil.dev_avance.security.UserDetailsImpl;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
-    AuthenticationManager authenticationManager;
-    JwtUtils jwtUtils;
+
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
 
     public AuthController(AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
         this.authenticationManager = authenticationManager;
@@ -31,7 +31,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> authenticateUser(@Valid @RequestBody Credentials loginRequest) {
+    public ResponseEntity<AuthResponseDTO> authenticateUser(@Valid @RequestBody Credentials loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
 
@@ -43,12 +43,6 @@ public class AuthController {
                 .map(item -> item.getAuthority())
                 .collect(Collectors.toList());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("token", jwt);
-        response.put("id", userDetails.getId());
-        response.put("username", userDetails.getUsername());
-        response.put("roles", roles);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(new AuthResponseDTO(jwt, userDetails.getId(), userDetails.getUsername(), roles));
     }
 }
